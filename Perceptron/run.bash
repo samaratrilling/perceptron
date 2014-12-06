@@ -10,14 +10,14 @@ date
 ./q4.bash
 scp tag_dev.out output/
 
-echo '\n'
+echo ""
 echo "running question5."
 date
 ./q5.bash
 scp suffix_tagger.model output/
 scp tag_dev_suffixes.out output/
 
-echo '\n'
+echo ""
 echo "running question6."
 date
 ./q6.bash
