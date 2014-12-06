@@ -113,7 +113,7 @@ public class Q5P2 {
 				ArrayList<String> suffixes = generateSuffixes(ithWord);
 				for (String suffix : suffixes) {
 					
-					String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + ithWord;
+					String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + v;
 					Double feature3 = vWeights.get(suffixKey);
 					if (feature3 == null) {
 						feature3 = 0.0;
@@ -156,7 +156,7 @@ public class Q5P2 {
 		for (int length = 1; length < 4; length ++) {
 			StringBuffer suffix = new StringBuffer();
 			int currentPos = word.length() - 1;
-			for (int j = 0; j < length-1; j++) {
+			for (int j = 0; j < length; j++) {
 				suffix.append(word.charAt(currentPos));
 				currentPos --;
 				if (currentPos < 0) {

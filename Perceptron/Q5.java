@@ -116,7 +116,7 @@ public class Q5 {
 					// SUFFIX FEATURE
 					ArrayList<String> suffixes = generateSuffixes(ithWord);
 					for (String suffix : suffixes) {
-						String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + ithWord;
+						String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + v;
 						if (goldFeatureMap.containsKey(suffixKey)) {
 							Double val = goldFeatureMap.get(suffixKey);
 							val += 1;
@@ -164,7 +164,7 @@ public class Q5 {
 					ArrayList<String> suffixes = generateSuffixes(ithWord);
 					for (String suffix : suffixes) {
 						
-						String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + ithWord;
+						String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + v;
 						Double suffixWeight = vWeights.get(suffixKey);
 						if (suffixWeight == null) {
 							suffixWeight = 0.0;
@@ -181,18 +181,6 @@ public class Q5 {
 						Double sufWeight = lineFeatureMap.get(fKey);	
 						score += sufWeight;
 					}
-					/*for (int k = 0; k < suffixKeys.size(); k++) {
-						String fKey = suffixKeys.get(k);
-						Double fVal = 0.0;
-						if (fKey != null) {
-							fVal = lineFeatureMap.get(fKey);
-						}
-						Double sufWeight = vWeights.get(fKey);
-						if (sufWeight == null) {
-							sufWeight = 0.0;
-						}
-						score += (fVal * sufWeight);
-					}*/
 
 					String historyLine = index + " " + u + " " + v + " " + score;
 					historyDotScores.append(historyLine + "\n");
@@ -202,71 +190,114 @@ public class Q5 {
 				String[] bestTagging = bestScoringHistory.split("\n");
 				
 				// Check whether or not the best history is the same as the gold history.
+				String[] goldHistory = removeSpaces(goldhistories);
+				String[] bestTagNoSTOP = removeStop(bestTagging);
+				boolean goldEqualsExpected = arraysAreEqual(bestTagNoSTOP, goldHistory);
 				
+				if (!goldEqualsExpected) {
+					// Get back the line feature map for the best scoring expected sentence.
+
+					for (String history : bestTagNoSTOP) {
+						HashMap<String, Double> taggingFeatureMap = new HashMap<>();
+						String[] historyComp = history.split("\\s+");
+						int index = Integer.parseInt(historyComp[0]);
+						String u = historyComp[1];
+						String v = historyComp[2];
+						
+						// BIGRAM FEATURE
+						String bigramKey = "BIGRAM:" + u + ":" + v;
+						taggingFeatureMap.put(bigramKey, 1.0);
+						
+						// TAG FEATURE
+						String ithWord = words[index-1].split("\\s+")[0];
+						String tagKey = "TAG:" + ithWord + ":" + v;
+						taggingFeatureMap.put(tagKey, 1.0);
+						
+						// SUFFIX FEATURE
+						ArrayList<String> suffixes = generateSuffixes(ithWord);
+						for (String suffix : suffixes) {	
+							String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + v;
+							taggingFeatureMap.put(suffixKey, 1.0);
+						}
+						
+						// Update v for expected tagging.
+						for (String expKey : taggingFeatureMap.keySet()) {
+							Double value = vWeights.get(expKey);
+							if (value == null) {
+								value = 0.0;
+							}
+							
+							// If the key is already in v, subtract the value of the expected weight.
+							// Otherwise, just store 0 - the value of the expected weight.
+							Double toSubtract = taggingFeatureMap.get(expKey);
+							value -= toSubtract;
+
+							vWeights.put(expKey, value);
+						}
+			
+					}// end iteration through the full best tagging.
+					
+					// Update v
+					// For gold keys
+					for (String goldKey : goldFeatureMap.keySet()) {
+						Double value = vWeights.get(goldKey);
+						if (value == null) {
+							value = 0.0;
+						}
+						// If the key is already in v, add the value of the gold weight.
+						// Otherwise, just store the value of the gold weight.
+						Double toAdd = goldFeatureMap.get(goldKey);
+						value += toAdd;
+
+						vWeights.put(goldKey, value);
+					}
+
+				} // end check for gold = expected
 				
-				// Get back the line feature map for the best scoring expected sentence.
-				HashMap<String, Double> taggingFeatureMap = new HashMap<>();
-				for (String history : bestTagging) {
-					String[] historyComp = history.split("\\s+");
-					int index = Integer.parseInt(historyComp[0]);
-					String u = historyComp[1];
-					String v = historyComp[2];
-					if (v.equals("STOP")) {
-						break;
-					}
-					
-					// BIGRAM FEATURE
-					String bigramKey = "BIGRAM:" + u + ":" + v;
-					taggingFeatureMap.put(bigramKey, 1.0);
-					
-					// TAG FEATURE
-					String ithWord = words[index-1].split("\\s+")[0];
-					String tagKey = "TAG:" + ithWord + ":" + v;
-					taggingFeatureMap.put(tagKey, 1.0);
-					
-					// SUFFIX FEATURE
-					ArrayList<String> suffixes = generateSuffixes(ithWord);
-					for (String suffix : suffixes) {	
-						String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + ithWord;
-						taggingFeatureMap.put(suffixKey, 1.0);
-					}
-		
-				}// end iteration through the full best tagging.
-				
-				// Update v
-				// For gold keys
-				for (String goldKey : goldFeatureMap.keySet()) {
-					Double value = vWeights.get(goldKey);
-					if (value == null) {
-						value = 0.0;
-					}
-					// If the key is already in v, add the value of the gold weight.
-					// Otherwise, just store the value of the gold weight.
-					Double toAdd = goldFeatureMap.get(goldKey);
-					value += toAdd;
-
-					vWeights.put(goldKey, value);
-
-				}
-				// Update v for expected tagging.
-				for (String expKey : taggingFeatureMap.keySet()) {
-					Double value = vWeights.get(expKey);
-					if (value == null) {
-						value = 0.0;
-					}
-					
-					// If the key is already in v, subtract the value of the expected weight.
-					// Otherwise, just store 0 - the value of the expected weight.
-					Double toSubtract = taggingFeatureMap.get(expKey);
-					value -= toSubtract;
-
-					vWeights.put(expKey, value);
-				}
 			}// end iteration through sentences
 			
 			System.out.println("Finished iteration " + (i + 1));
 		}// end this iteration of the algorithm
 		return vWeights;
+	}
+	
+	public static String[] removeStop (String[] array) {
+		String[] toReturn = new String[array.length-1];
+		for (int i = 0; i < array.length - 1; i++) {
+			toReturn[i] = array[i];
+		}
+		return toReturn;
+	}
+	
+	public static boolean arraysAreEqual(String[] array1, String[] array2) {
+		if (array1.length != array2.length) {
+			return false;
+		}
+		for (int i = 0; i < array1.length; i++) {
+			if (array1[i].equals(array2[i])) {
+				continue;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public static String[] removeSpaces(String[] goldTagging) {
+		String[] finalTagging = new String[goldTagging.length];
+		for (int i = 0; i < goldTagging.length; i++) {
+			String s = goldTagging[i];
+		
+			String[] words = s.split("\\s+");
+			StringBuffer hist = new StringBuffer();
+			for (String w : words) {
+				hist.append(w + " ");
+			}
+			String finalHist = hist.toString().trim();
+			finalTagging[i] = finalHist;
+		}
+		return finalTagging;
 	}
 	
 	public static ArrayList<String> generateSuffixes(String word) {
