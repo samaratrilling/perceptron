@@ -16,7 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 
 
-public class Q4 {
+public class Q5P2 {
 
 	static HashMap<String, Double> vWeights;
 	static List<String> devSentences;
@@ -29,7 +29,7 @@ public class Q4 {
 
 		try {
 			// 1. Read tag model in from tag.model
-			BufferedReader readTagModel = new BufferedReader(new FileReader("tag.model"));
+			BufferedReader readTagModel = new BufferedReader(new FileReader("suffix_tagger.model"));
 			String line = readTagModel.readLine();
 			while (line != null) {
 				storeRAndV(line);
@@ -47,7 +47,7 @@ public class Q4 {
 			devSentences = readDevData("tag_dev.dat");
 			
 			bestHistories = perceptron(vWeights, devSentences, taggerHistory, taggerDecoder);
-			printBestHistories(bestHistories, "tag_dev.out");
+			printBestHistories(bestHistories, "tag_dev_suffixes.out");
 			
 			
 			//String output = callProcess(taggerHistory, "There DET\nis VERB\nno DET\n asbestos NOUN\nin ADP\nour PRON\nproducts NOUN\nnow ADV\n. .");
@@ -89,6 +89,7 @@ public class Q4 {
 				String u = historyComp[1];
 				String v = historyComp[2];
 				int i = Integer.parseInt(historyComp[0]);
+				String ithWord = sentenceComp[i-1];
 				
 				// Calc feature 1
 				String bigramKey = "BIGRAM:" + u + ":" + v;
@@ -99,14 +100,29 @@ public class Q4 {
 				
 				// Calc feature 2
 				// Get the word in the sentence corresponding to position i (arrays start at 0 and i starts at 1)
-				String tagKey = "TAG:" + sentenceComp[i-1] + ":" + v;
+				String tagKey = "TAG:" + ithWord + ":" + v;
 				Double feature2 = vWeights.get(tagKey);
 				//System.out.println(tagKey + " " + weight2);
 				if (feature2 == null) {
 					feature2 = 0.0;
 				}
 				
-				Double historyWeight = feature1 + feature2;
+				// Calc feature 3, suffixes.
+				// SUFFIX FEATURE
+				Double suffixSum = 0.0;
+				ArrayList<String> suffixes = generateSuffixes(ithWord);
+				for (String suffix : suffixes) {
+					
+					String suffixKey = "SUFFIX:" + suffix + ":" + suffix.length() + ":" + ithWord;
+					Double feature3 = vWeights.get(suffixKey);
+					if (feature3 == null) {
+						feature3 = 0.0;
+					}
+					suffixSum += feature3;
+					
+				}
+				
+				Double historyWeight = feature1 + feature2 + suffixSum;
 				// historyScoreLine should be of form 1 * DET 23.2\n
 				String historyScoreLine = i + " " + u + " " + v + " " + historyWeight;
 				historyDotScores.append(historyScoreLine + "\n");
@@ -123,16 +139,37 @@ public class Q4 {
 			// Iterate through the history
 			for (int b = 0; b < bestComp.length - 1; b++) {
 				String bigram = bestComp[b];
-			
+
 				String[] bigramComp = bigram.split(" ");
 				int index = Integer.parseInt(bigramComp[0]);
 				String bestHistLine = sentenceComp[index-1] + " " + bigramComp[2];
 				highestScoringHistories.append(bestHistLine + "\n");
 			}
 			highestScoringHistories.append("\n");
-					
+
 		}// end iteration through sentences
 		return highestScoringHistories.toString();
+	}
+	
+	public static ArrayList<String> generateSuffixes(String word) {
+		ArrayList<String> suffixes = new ArrayList<String>();
+		for (int length = 1; length < 4; length ++) {
+			StringBuffer suffix = new StringBuffer();
+			int currentPos = word.length() - 1;
+			for (int j = 0; j < length-1; j++) {
+				suffix.append(word.charAt(currentPos));
+				currentPos --;
+				if (currentPos < 0) {
+					break;
+				}
+			}
+			suffixes.add(suffix.reverse().toString());
+			if (currentPos < 0) {
+				break;
+			}
+
+		}
+		return suffixes;
 	}
 	
 	public static Process spawnProcess(String[] command) throws IOException{
