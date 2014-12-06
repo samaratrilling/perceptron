@@ -10,7 +10,17 @@ Correct:	Total:	Percentage:
 2226 		2459 	0.905246034974
 
 Observations:
-
+My tagger consistently tagged some nationality names with initial capitals
+(like German and Dutch) as adjectives when they should have been nouns, according
+to the key. However, it also consistently tagged some nationalities (like Egyptian
+and Libyan) as nouns when they should have been adjectives, according to the
+key.
+This goes to show that nationalities are inherently ambiguous when it comes to parts
+of speech, and more context is needed to determine which part of speech they are.
+A phrase like "The German forces" should clearly be tagged DET ADJ NOUN whereas
+a phrase like "The German sat down" should clearly be tagged DET NOUN VERB ADV.
+Perhaps a feature that logs the previous and next tags would be useful in a case
+like this.
 
 Q5------------------------------
 Performance:
@@ -18,7 +28,9 @@ Correct:	Total:	Percentage:
 2293 		2459 	0.932492883286
 
 Observations:
-The tagger seems to miss a lot of words that contain
+The performance improved significantly with the addition of the suffix feature.
+
+However, the tagger seems to miss a lot of words that contain
 dashes, and words that start with an initial capital.
 Examples-------------
 Initial Capital:
@@ -134,11 +146,6 @@ Performance with q5 features + DASH feature + CAPITAL feature:
 2301 		2459 	0.935746238308
 
 
-
-Part1: how to run your code step by step (make sure your code can run on CLIC). 
-Part2: performance for your algorithm (including precision, recall, and F-score). 
-Part3: observations and comments about your experimental results. 
-Part4: any additional information that is requested in the problem.
 
 eval_tagger.py - evaluation script 
 tagger_decoder.py, tagger_config.py, make_dict.py - implementation of a bigram decoder
