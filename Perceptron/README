@@ -15,16 +15,124 @@ Observations:
 Q5------------------------------
 Performance:
 Correct:	Total:	Percentage:
-
+2293 		2459 	0.932492883286
 
 Observations:
+The tagger seems to miss a lot of words that contain
+dashes, and words that start with an initial capital.
+Examples-------------
+Initial Capital:
+< Applied	NOUN
+---
+> Applied ADJ
+< Libyan	ADJ
+---
+> Libyan NOUN
+< German	NOUN
+---
+> German ADJ
+< Earlier	ADV
+---
+> Earlier NOUN
+
+Dash:
+< World-wide	ADJ
+---
+> World-wide NOUN
+< bargain-hunting	NOUN
+---
+> bargain-hunting ADJ
+< temporary-help	ADJ
+---
+> temporary-help NOUN
+< York-based	ADJ
+---
+> York-based VERB
+
 
 Q6------------------------------
-Performance:
+For question 6, I decided to implement features that
+indicate a) whether or not the word has a dash in it
+b) whether or not the word starts with a capital letter, and
+c) a prefix feature very similar to the suffix feature
+I implemented for question 5.
+
+DASH FEATURE
+Performance with q5 features + *just* dash feature:
 Correct:	Total:	Percentage:
+2296 		2459 	0.933712891419
 
+After implementing this feature, more words with dashes
+were tagged as adjectives rather than as nouns.
+< dispute-settlement NOUN
+> dispute-settlement ADJ
+< right-to-work NOUN
+> right-to-work ADJ
+< lump-sum NOUN
+> lump-sum ADJ
+< Soft-Sell NOUN
+> Soft-Sell ADJ
+< pork-barrel NOUN
+> pork-barrel ADJ
+< shorter-term NOUN
+> shorter-term ADJ
 
-Observations:
+CAPITAL FEATURE:
+Performance with q5 features and *just* capital feature:
+2296 		2459 	0.933712891419
+Performance with q5 features + DASH feature + CAPITAL feature:
+2301 		2459 	0.935746238308
+
+Interestingly, in the version with the DASH and CAPITAL features,
+the tagger seemed to (incorrectly) tag many more initial-capital words
+as nouns.
+Ex:
+< Egyptian	ADJ
+---
+> Egyptian NOUN
+< Libyan	ADJ
+---
+> Libyan NOUN
+< American	ADJ
+---
+> American NOUN
+
+Others, however, it correctly tagged as adjectives.
+< Dutch	NOUN
+---
+> Dutch ADJ
+< South	NOUN
+< African	NOUN
+---
+> South ADJ
+> African ADJ
+
+PREFIX FEATURE
+The prefix feature is the exact opposite of the suffix feature - 
+it generates max three prefixes per word, e.g. complicated ->
+c, co, com.
+Performance
+Correct	Total	Percentage
+1491 	2459 	0.606344042294
+
+Clearly this feature was resulting in many words being tagged incorrectly
+(which makes sense - just because one word starts with a c and is tagged as
+a noun doesn't mean that other words that start with c should be tagged as nouns).
+
+I therefore modified my prefix feature to only take into account prefixes
+of length 3 or 4. (e.g. complicated -> com, comp).
+This improved the score slightly:
+Correct	Total	Percentage
+1701 	2459 	0.691744611631
+But on the whole, a prefix feature is not a useful indicator and results
+in increased numbers of incorrect tagging.
+
+My most successful tagger was one that just used bigram, tag, suffix, initial capital
+and dash parameters.
+FINAL BEST PERFORMANCE:
+Performance with q5 features + DASH feature + CAPITAL feature:
+2301 		2459 	0.935746238308
+
 
 
 Part1: how to run your code step by step (make sure your code can run on CLIC). 
